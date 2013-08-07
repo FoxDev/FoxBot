@@ -28,11 +28,11 @@ public class PermissionManager
             {
                 return false;
             }
-            if (foxbot.getPermissionsFile().getStringList("permissions.default").contains(permission))
+            if (foxbot.getPermissionsFile().getStringList("permissions.default").contains(permission)|| foxbot.getPermissionsFile().getStringList("permissions.default").contains("permissions.*"))
             {
                 return true;
             }
-            if (foxbot.getPermissionsFile().getStringList("permissions." + userName).contains(permission))
+            if (foxbot.getPermissionsFile().getStringList("permissions." + userName).contains(permission) || foxbot.getPermissionsFile().getStringList("permissions." + userName).contains("permissions.*"))
             {
                 return true;
             }
