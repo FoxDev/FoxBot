@@ -22,9 +22,11 @@ public class CommandUptime extends Command
 
     @Override
     public void execute(User sender, Channel channel, String[] args)
-    {
-        if (args.length == 0)
-        {
+    {       
+            if(System.getProperty("os.name").toLowerCase().contains("win")){
+                foxbot.getBot().sendNotice(sender, "This command is only supported on linux based systems.");
+                return;
+            }
             try
             {
                 String uptime = new Scanner(new FileInputStream("/proc/uptime")).next().replaceAll("\\.[0-9]+", "");
@@ -43,8 +45,5 @@ public class CommandUptime extends Command
                 foxbot.getBot().sendNotice(sender, "File \"/proc/uptime\" not found. Are you sure you're using Linux?");
                 return;
             }
-        }
-        foxbot.getBot().sendNotice(sender, String.format("Wrong number of args! use %suptime",
-                foxbot.getConfig().getCommandPrefix()));
     }
 }
