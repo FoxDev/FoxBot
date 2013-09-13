@@ -5,16 +5,12 @@ import org.pircbotx.User;
 import org.pircbotx.hooks.events.MessageEvent;
 import uk.co.revthefox.foxbot.FoxBot;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.net.InetAddress;
+import java.net.Socket;
 
 public class CommandPing extends Command
 {
+
     private FoxBot foxbot;
 
     public CommandPing(FoxBot foxbot)
@@ -28,43 +24,59 @@ public class CommandPing extends Command
     {
         Channel channel = event.getChannel();
         User sender = event.getUser();
-
+        String host;
+        int port = 80;
         if (args.length == 1)
         {
             try
             {
-                URL url = new URL(args[0].startsWith("http://") ? args[0] : "http://" + args[0]);
-                HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-                urlConn.setConnectTimeout(10000);
-                urlConn.setInstanceFollowRedirects(true);
-                long startTime = System.currentTimeMillis();
-                urlConn.connect();
-                long endTime = System.currentTimeMillis();
-
-                if (urlConn.getResponseCode() == HttpURLConnection.HTTP_OK)
-                {
-                    channel.sendMessage(foxbot.getUtils().colourise(String.format("&aPing response time: &r%sms", (endTime - startTime))));
-                    urlConn.disconnect();
-                    return;
-                }
-            }
-            catch (MalformedURLException ex)
+                host = args[0];
+                String returns;
+                Long time;
+                Long start = System.currentTimeMillis();
+                Socket socket = new Socket(InetAddress.getByName(host), port);
+                socket.close();
+                channel.sendMessage(foxbot.getUtils().colourise(String.format("&aPing response time: &r%sms", System.currentTimeMillis() - start)));
+            } catch (Exception ex)
             {
-                Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
-                foxbot.sendNotice(sender, String.format("%s is not a valid address!", args[0]));
-            }
-            catch (UnknownHostException ex)
-            {
-                Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
-                foxbot.sendNotice(sender, String.format("%s is an unknown address!", args[0]));
-            }
-            catch (IOException ex)
-            {
-                Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
-                channel.sendMessage(foxbot.getUtils().colourise("&cSomething went wrong..."));
+                foxbot.sendNotice(sender, String.format("&c%s", ex.toString()));
             }
             return;
         }
-        foxbot.sendNotice(sender, String.format("Wrong number of args! Use %sping <address>", foxbot.getConfig().getCommandPrefix()));
+        if (args.length == 2)
+        {
+            try
+            {
+                host = args[0];
+                port = Integer.valueOf(args[1]);
+                String returns;
+                Long time;
+                Long start = System.currentTimeMillis();
+                Socket socket = new Socket(InetAddress.getByName(host), port);
+                socket.close();
+                channel.sendMessage(foxbot.getUtils().colourise(String.format("&aPing response time: &r%sms", System.currentTimeMillis() - start)));
+            } catch (Exception ex)
+            {
+                String error = ex.toString();
+                if (error.contains("java.net.UnknownHostException"))
+                {
+                    foxbot.sendNotice(sender, String.format("%s is an unknown address!", args[0]));
+                    return;
+                }
+                if (error.contains("java.lang.NumberFormatException"))
+                {
+                    foxbot.sendNotice(sender, String.format("%s isn't a number!", args[1]));
+                    return;
+                }
+                if (error.contains("java.lang.IllegalArgumentException"))
+                {
+                    foxbot.sendNotice(sender, String.format("%s is too high a number for a port!", args[1]));
+                    return;
+                }
+                foxbot.sendNotice(sender, foxbot.getUtils().colourise(String.format("&c%s", error)));
+            }
+            return;
+        }
+        foxbot.sendNotice(sender, String.format("Wrong number of args! Use %sping <address> [port]", foxbot.getConfig().getCommandPrefix()));
     }
 }
